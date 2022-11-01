@@ -61,6 +61,7 @@ export const isMultiFilter = (filter: Filter): filter is MultiFilter => {
 
 const getListQuery = (database = '', table = '', fields: string[] = []): string => {
   const sep = database === '' || table === '' ? '' : '.';
+  table = table === '' ? '' : `\`${table}\``;
   fields = fields && fields.length > 0 ? fields : [''];
   return `SELECT ${fields.join(', ')} FROM ${database}${sep}${table}`;
 };
@@ -83,6 +84,7 @@ const getAggregationQuery = (
     .filter((x) => !fields.some((y) => y === x)) // not adding field if its already is selected
     .join(', ');
   const sep = database === '' || table === '' ? '' : '.';
+  table = table === '' ? '' : `\`${table}\``;
   return `SELECT ${selected}${selected && (groupByQuery || metricsQuery) ? ', ' : ''}${groupByQuery}${
     metricsQuery && groupByQuery ? ', ' : ''
   }${metricsQuery} FROM ${database}${sep}${table}`;
@@ -115,6 +117,7 @@ const getTrendByQuery = (
   }
 
   const sep = database === '' || table === '' ? '' : '.';
+  table = table === '' ? '' : `\`${table}\``;
   return `SELECT ${metricsQuery} FROM ${database}${sep}${table}`;
 };
 
@@ -269,7 +272,7 @@ export function getQueryOptionsFromSql(sql: string): SqlBuilderOptions {
     return {} as SqlBuilderOptions;
   }
 
-  const databaseAndTable = fromPhrase[0].trim().split('.');
+  const databaseAndTable = fromPhrase[0].trim().split(/\.(.*)/s);
   const where = ast.get('WHERE');
   const limit = ast.get('LIMIT');
 
@@ -278,7 +281,9 @@ export function getQueryOptionsFromSql(sql: string): SqlBuilderOptions {
   let builder = {
     mode: fieldsAndMetrics.metrics.length > 0 ? BuilderMode.Aggregate : BuilderMode.List,
     database: databaseAndTable[1] ? databaseAndTable[0].trim() : '',
-    table: databaseAndTable[1] ? databaseAndTable[1].trim() : databaseAndTable[0].trim(),
+    table: databaseAndTable[1]
+      ? databaseAndTable[1].trim().replace('`', '').replace('`', '') // FIXME: use replaceAll
+      : databaseAndTable[0].trim().replace('`', '').replace('`', ''),
   } as SqlBuilderOptions;
 
   if (fieldsAndMetrics.fields) {

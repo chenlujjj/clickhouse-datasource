@@ -224,7 +224,7 @@ describe('ClickHouseDatasource', () => {
       const spyOnQuery = jest.spyOn(ds, 'query').mockImplementation((request) => of({ data: [frame] }));
 
       await ds.fetchFieldsFull('db_name', 'table_name');
-      const expected = { rawSql: 'DESC TABLE db_name.table_name' };
+      const expected = { rawSql: 'DESC TABLE db_name.`table_name`' };
 
       expect(spyOnQuery).toHaveBeenCalledWith(
         expect.objectContaining({ targets: expect.arrayContaining([expect.objectContaining(expected)]) })
@@ -237,7 +237,7 @@ describe('ClickHouseDatasource', () => {
       const spyOnQuery = jest.spyOn(ds, 'query').mockImplementation((request) => of({ data: [frame] }));
 
       await ds.fetchFieldsFull('', 'table_name');
-      const expected = { rawSql: 'DESC TABLE table_name' };
+      const expected = { rawSql: 'DESC TABLE `table_name`' };
 
       expect(spyOnQuery).toHaveBeenCalledWith(
         expect.objectContaining({ targets: expect.arrayContaining([expect.objectContaining(expected)]) })
